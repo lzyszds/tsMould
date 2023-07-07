@@ -30,33 +30,32 @@ const get: ApiConfig[] = mapGather({
         //记录当前返回的图片
         randomName = random
         //返回图片
-        res.send({code: 200, data: '/img/updateImg/' + img, msg: '获取成功'} as ResponseData<string>)
+        return success(res, '/img/updateImg/' + img, '获取成功')
+        // res.send({code: 200, data: '/img/updateImg/' + img, msg: '获取成功'} as ResponseData<string>)
     },
 
     //查询用户列表
     "/overtApis/getUserList": async function (req: Request, res: Response) {
-        const header = req.headers.authorization
+        const authorization = req.headers.authorization
+        //如果没有token 则返回未授权
+        if (authorization === undefined) return unauthorized(res, '未授权,请登录')
         //限制每次返回多少条数据
         let {pages, limit, search} = req.query
         search = search ? search : ''
-        //查询语句 模糊查询 通过uid uname username power
-        const text = `
-          select * from USERLIST
-          WHERE uid like '%${search}%' or
-          uname like '%${search}%' or
-          username like '%${search}%' or
-          power like '%${search}%'
-          order by uid
-        `
-        //执行数据库查询
-        handleSqlTodo({type: 'select', text, hasVerify: false, header})
-            .then((result) => {
-                //截取数据
-                const {data, total} = sliceData(result, Number(pages), Number(limit))
-                //返回数据
-                success(res, data, '查询成功', total)
-            })
+        //查询语句
+        const sqlTxt = `select * from userlist where uname like '%${search}%'
+        order by uid desc limit ${(Number(pages) - 1) * Number(limit)},${Number(pages) * Number(limit)}`
+        //查询总条数
+        const total = await handleSqlTodo({
+            type: 'select',
+            text: `select count(*) from userlist where uname like '%${search}%'`,
+            header:authorization
+        })
+        //执行查询
+        handleSqlTodo({type: 'select', text: sqlTxt, header: authorization})
+            .then(item => success(res, item, '查询成功', total[0]['count(*)']))
             .catch(err => error(res, err))
+
     },
     //获取用户详情
     '/overtApis/getUserInfo': (req: Request, res: Response) => {
@@ -67,15 +66,34 @@ const get: ApiConfig[] = mapGather({
         //解析token
         const {username, uname} = tokenClass.decodeToken(authorization)
         //查询语句
-        const text = `select uid,uname,username,power,createDate,lastLoginDate,perSign,headImg,isUse from USERLIST where username='${username}' and uname='${uname}' `
+        const text = `select uid,uname,username,power,createDate,lastLoginDate,perSign,headImg,isUse from
+                            USERLIST where username='${username}' and uname='${uname}' `
         //执行查询
         handleSqlTodo({type: 'select', text, header: authorization})
-            .then(item => {
-                //返回数据
-                res.send({code: 200, data: item[0], msg: '查询成功'} as ResponseData<User>)
-            })
+            .then(item => success(res, item[0], '查询成功')
+            )
             .catch(err => error(res, err))
-    }
+    },
+    //查询文章列表
+    '/overtApis/articleList': async (req: Request, res: Response) => {
+        //获取页数和每页条数
+        const {pages, limit, search} = req.query
+        //查询语句
+        const sqlTxt = `select * from articlelist where title like '%${search??''}%' 
+        order by aid desc limit ${(Number(pages) - 1) * Number(limit)},${Number(pages) * Number(limit)}`
+        console.log(sqlTxt)
+        //查询总条数
+        const total = await handleSqlTodo({
+            type: 'select',
+            text: `select count(*) from articlelist where title like '%${search??''}%'`,
+            hasVerify: true
+        })
+        //执行查询
+        handleSqlTodo({type: 'select', text: sqlTxt, hasVerify: true})
+            .then(item => success(res, item, '查询成功', total[0]['count(*)']))
+            .catch(err => error(res, err))
+
+    },
 })
 
 const post: ApiConfig[] = mapGather({
