@@ -10,6 +10,14 @@ const success = <T>(res: Response, data: T, msg?: string, total?: number) => {
         total
     } as ResponseData<T>)
 }
+//图片返回
+const successImg = (res: Response, data: Buffer) => {
+    // 返回给前端
+    res.writeHead(200, { 'Content-Type': 'image/png' });
+    /* res:响应 data:响应数据 msg:响应信息 */
+    res.end(data)
+}
+
 // 服务器错误
 const error = (res: Response, msg: string | unknown) => {
     /* res:响应 msg:响应信息 */
@@ -48,6 +56,7 @@ const unauthorized = (res: Response, msg: string | unknown) => {
 
 export const errorHandle = {
     success,
+    successImg,
     error,
     notFound,
     badRequest,

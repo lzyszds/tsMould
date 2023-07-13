@@ -1,7 +1,11 @@
 import {Request, Response} from "express";
 import jwt from "jsonwebtoken"
-import handleSqlTodo from "./mysql";
+import sqlHandlesTodo from "./mysql";
 import {ErrorR, ResponseData} from "../../typings/PostReturn";
+import fs from "fs"
+import multer from "multer"
+import * as https from "https";
+
 
 interface MapObject {
     [key: string]: any;
@@ -40,7 +44,7 @@ const tokenClass = {
             //返回解析token的结果
             const proxy: any = jwt.verify(token, secret) || {}
             const text = `select uid from USERLIST where username='${proxy.username}' and uname='${proxy.uname}' `
-            handleSqlTodo({type: 'select', text, hasVerify: true})
+            sqlHandlesTodo({type: 'select', text, hasVerify: true})
                 .then((result: any) => {
                     if (result.length > 0) {
                         resolve(result[0])
@@ -54,9 +58,6 @@ const tokenClass = {
         })
     }
 }
-
-
-
 
 
 // 数据截取
@@ -87,10 +88,32 @@ const randomUnique = (min: number, max: number, random: number): number => {
     return num
 }
 
+//图片代理
+const imgProxy = (url: string) => {
+    // 将网络图片转换成base64
+    return new Promise((resolve, reject) => {
+        https.get(url, (res: any) => {
+            let chunks: any = []
+            res.on('data', (chunk: any) => {
+                chunks.push(chunk)
+            })
+            res.on('end', () => {
+                let data: Buffer = Buffer.concat(chunks)
+                let base64Img: string = data.toString('base64')
+                const img: string = 'data:image/jpeg;base64,' + base64Img
+                // 将base64转为图片
+                const base64Data: string = img.replace(/^data:image\/\w+;base64,/, "");
+                const dataBuffer: Buffer = Buffer.from(base64Data, 'base64');
+                resolve(dataBuffer)
+            })
+        })
+    })
+}
 
 export {
     mapGather,
     tokenClass,
     sliceData,
-    randomUnique
+    randomUnique,
+    imgProxy,
 }

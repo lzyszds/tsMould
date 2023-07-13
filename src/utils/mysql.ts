@@ -19,25 +19,32 @@ connection.connect((err) => {
         console.log('数据库连接成功')
     }
 })
+/*
+    type: 对sql操作的类型;
+    text: sql语句;
+    hasVerify：是否不需要验证true为不需要.默认需要验证;
+    token：用户token 与hasVerify对立，两者必有一样存在，否则报错;
+    errmsg: 数据为空时错误提示;
+*/
 type SqlTodo = {
     type: SqlType,
     text: string,
     errmsg?: string,
     hasVerify?: boolean,
-    header?: string
+    token?: string
 }
 
 type SqlType = 'select' | 'insert' | 'update' | 'delete' | 'alter'
 
 //接收到前端发来的sql语句
-const handleSqlTodo = (options: SqlTodo): Promise<any> => {
-    const {type, text, hasVerify, header, errmsg} = options
+const sqlHandlesTodo = (options: SqlTodo): Promise<any> => {
+    const {type, text, hasVerify, token, errmsg} = options
     return new Promise((resolve, reject) => {
         //检测当前的text是否是查询语句
         const isCompliant: boolean = checkText(text, type)
         if (isCompliant) return reject(`当前${type}语句不合规范`)
         //验证token
-        tokenClass.verifyToken(header || '', hasVerify).then(res => {
+        tokenClass.verifyToken(token || '', hasVerify).then(res => {
             //连接数据库
             connection.query(text, (err, result) => {
                 if (err) {
@@ -59,7 +66,7 @@ const handleSqlTodo = (options: SqlTodo): Promise<any> => {
     }).catch((err: Error) => console.log(err))
 }
 
-export default handleSqlTodo
+export default sqlHandlesTodo
 
 // 检查语句是否为当前的函数规定语句
 const checkText = (text: string, type: string): boolean => {

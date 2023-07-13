@@ -6,8 +6,8 @@ node.js + ts + express 的后台管理系统 只提供接口，不提供页面
 
 ├── src
 │   ├── router
-│   │   ├── apiConfig.ts
-│   │   ├── getMoudel.ts
+│   │   ├── getApiList.ts
+│   │   ├── postApiList.ts
 │   │   ├── router.ts
 │   ├── utils
 │   │   ├── common.ts
