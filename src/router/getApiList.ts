@@ -4,7 +4,8 @@ import path from "path";
 import {mapGather, tokenClass, sliceData, randomUnique, imgProxy} from "../utils/common";
 import {errorHandle} from "../utils/error";
 import sqlHandlesTodo from "../utils/mysql";
-import {ApiConfig} from "../../typings/ApiCongfigType";
+import {ApiConfig, ParamsMuster} from "../../typings/ApiCongfigType";
+
 
 const {success, successImg, error, notFound, badRequest, unauthorized} = errorHandle
 //路径默认配置值
@@ -37,7 +38,7 @@ const get: ApiConfig[] = mapGather({
         //如果没有token 则返回未授权
         if (token === undefined) return unauthorized(res, '未授权,请登录')
         //限制每次返回多少条数据
-        let {pages, limit, search} = req.query
+        let {pages, limit, search}: ParamsMuster = req.query
         search = search ? search : ''
         //查询语句
         const sqlTxt = `select * from userlist where uname like '%${search}%'
@@ -63,7 +64,7 @@ const get: ApiConfig[] = mapGather({
         //解析token
         const {username, uname} = tokenClass.decodeToken(token)
         //查询语句
-        const text = `select uid,uname,username,power,createDate,lastLoginDate,perSign,headImg,isUse from
+        const text: string = `select uid,uname,username,power,createDate,lastLoginDate,perSign,headImg,isUse from
                             USERLIST where username='${username}' and uname='${uname}' `
         //执行查询
         sqlHandlesTodo({type: 'select', text, token})
@@ -74,7 +75,7 @@ const get: ApiConfig[] = mapGather({
     //查询文章列表
     '/articleList': async (req: Request, res: Response) => {
         //获取页数和每页条数
-        const {pages, limit, search} = req.query
+        const {pages, limit, search}: ParamsMuster = req.query
         //查询语句
         const sqlTxt = `select * from articlelist where title like '%${search??''}%' 
         order by aid limit ${(Number(pages) - 1) * Number(limit)},${limit}`

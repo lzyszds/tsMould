@@ -1,19 +1,24 @@
-
 interface ApiConfig {
-  /* 
-    key: api 地址
-    value: 回调函数 需要传入 req, res 类型HttpResult
-   */
-  [key: string]: (arg: HttpResult) => void;
+    /*
+      key: api 地址
+      value: 回调函数 需要传入 req, res 类型HttpResult
+     */
+    [key: string]: (arg: HttpResult) => void;
 }
 
 interface HttpResult {
-  req: Request,
-  res: Response
+    req: Request,
+    res: Response
 }
 
+interface ParamsMuster {
+    pages?: number,
+    limit?: number,
+    search?: string
+}
 
 export {
-  ApiConfig,
-  HttpResult
+    ApiConfig,
+    HttpResult,
+    ParamsMuster
 }
