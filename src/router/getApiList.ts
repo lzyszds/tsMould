@@ -49,6 +49,7 @@ const get: ApiConfig[] = mapGather({
             text: `select count(*) from userlist where uname like '%${search}%'`,
             token
         })
+        //asdf
         //执行查询
         sqlHandlesTodo({type: 'select', text: sqlTxt, token})
             .then(item => success(res, item, '查询成功', total[0]['count(*)']))
