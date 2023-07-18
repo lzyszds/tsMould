@@ -92,6 +92,63 @@ const get: ApiConfig[] = mapGather({
             .catch(err => error(res, err))
 
     },
+    //获取文章详情
+    '/articleInfo': (req: Request, res: Response) => {
+        //获取文章id
+        const {aid} = req.query
+        //查询语句
+        const sqlTxt = `select * from articlelist where aid=${aid}`
+        //执行查询
+        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+            .then(item => success(res, item[0], '查询成功'))
+            .catch(err => error(res, err))
+    },
+    //获取文章评论
+    '/articleComment': (req: Request, res: Response) => {
+        //获取文章id
+        const {aid} = req.query
+        //查询语句
+        const sqlTxt = `select * from wcomment where article_id=${aid}`
+        //执行查询
+        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+            .then(data => {
+                if (data.length === 0) return success(res, [], '查询成功')
+                //声明一个数组
+                let arr: any[] = []
+                //处理二级评论数据，将二级评论放到对应的一级评论的reply属性中
+                const levelOne = data.filter((item: any) => item.reply_id == 0)
+                const levelTow = data.filter((item: any) => item.reply_id != 0)
+                levelOne.forEach((element: any) => {
+                    arr.push(element)
+                })
+                levelTow.forEach((element: any) => {
+                    levelOne.forEach((item: any) => {
+                        data.forEach((res: any) => {
+                            if (res.comId === element.reply_id) {
+                                element.replyPeople = res.user_name
+                            }
+                        })
+                        //将二级评论放到对应的一级评论的reply属性中
+                        if (item.comId === element.ground_id) {
+                            if (!item.reply) item.reply = []
+                            item.reply.push(element)
+                        }
+                    })
+                })
+                success(res, arr, '查询成功')
+            })
+            .catch(err => error(res, err))
+    },
+    //获取全部评论
+    '/getAllComment': (req: Request, res: Response) => {
+        //查询语句
+        const sqlTxt = `select * from wcomment`
+        //执行查询
+        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+            .then(item => success(res, item, '查询成功'))
+            .catch(err => error(res, err))
+    },
+
     //获取文章分类可选项
     '/articleType': async (req: Request, res: Response) => {
         //查询语句

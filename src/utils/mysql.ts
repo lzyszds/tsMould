@@ -52,7 +52,7 @@ const sqlHandlesTodo = (options: SqlTodo): Promise<any> => {
                     reject(`${type}失败`)
                 }
                 if (result.length === 0) {
-                    reject(errmsg || '当前查询结果为空')
+                    resolve(errmsg || [])
                 }
                 resolve(result)
             })

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import {mapGather, tokenClass} from "../utils/common";
 import {errorHandle} from "../utils/error";
-import {upload} from "../utils/upload";
+import {upload, uploadArticleImg} from "../utils/upload";
 import sqlHandlesTodo from "../utils/mysql";
 import dayjs from "dayjs";
 import {ResponseData, ErrorR} from "../../typings/PostReturn";
@@ -96,7 +96,13 @@ const post: ApiConfig[] = mapGather({
         sqlHandlesTodo({type: 'update', text: sqlTxt, token})
             .then(item => success(res, item, '修改成功'))
             .catch(err => error(res, err))
+    },
+    //上传文章封面或者内容图片
+    '/uploadArticleImg': (req: Request, res: Response) => {
+        uploadArticleImg(req, res)
     }
+
+
 })
 
 export default post
