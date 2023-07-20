@@ -1,10 +1,15 @@
 import express, { Application, json, Request, Response } from "express";
 import { ErrorR } from "./typings/PostReturn";
 import router from "./src/router/router";
+import fs from "fs";
+import path from "path";
 
 const app: Application = express()
 
 app.use(json())
+
+
+
 app.all("*", (req: Request, res: Response, next) => {
   // 设置跨域
   res.header("Access-Control-Allow-Origin", "*")

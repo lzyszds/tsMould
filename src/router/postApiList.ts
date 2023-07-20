@@ -100,8 +100,47 @@ const post: ApiConfig[] = mapGather({
     //上传文章封面或者内容图片
     '/uploadArticleImg': (req: Request, res: Response) => {
         uploadArticleImg(req, res)
-    }
+    },
+    //发布评论
+    '/addComment': (req: Request, res: Response) => {
 
+        //遍历文件夹下的所有图片
+        const imgs = fs.readdirSync(path.join(__dirname, '../../public/img/comments'))
+        //获取前端传入的参数
+        const {content, aid, replyId, groundId, email, name, userIp, imgIndex} = req.body
+        //获取当前图片的服务地址
+        const img: string = `http://${req.get("Host")}/public/img/comments/${imgs[imgIndex]}`
+        //当前时间 时间戳
+        const nowDate: number = dayjs().unix();
+        const sqlTxt: string = `
+            insert into wcomment(content, article_id, reply_id,ground_id, email, user_name,user_ip,time,head_img)
+            values('${content}', '${aid}', '${replyId}','${groundId}', '${email}', '${name}', '${userIp}','${nowDate}','${img}')
+          `
+        sqlHandlesTodo({type: 'insert', text: sqlTxt, hasVerify: true})
+            .then(item => {
+                const text: string = `update articlelist set comNumber=comNumber+1 where aid=${aid}`
+                sqlHandlesTodo({type: 'update', text, hasVerify: true}).then(resq => {
+                    success(res, '评论成功')
+                })
+            })
+            .catch(err => error(res, err))
+    },
+    //删除评论
+    '/deleteComment': (req: Request, res: Response) => {
+        // 获取前端传入的参数
+        const {comId, aid} = req.body
+        const token = req.headers.authorization
+        // sql声明
+        let text = `DELETE FROM wcomment WHERE comId=${comId};`
+        // 调用删除方法
+        sqlHandlesTodo({type: 'delete', text, token})
+            .then(item => {
+                const text: string = `update articlelist set comNumber=comNumber-1 where aid=${aid}`
+                sqlHandlesTodo({type: 'update', text, hasVerify: true}).then(resq => {
+                    success(res, '删除成功')
+                })
+            }).catch(err => error(res, err))
+    }
 
 })
 

@@ -16,6 +16,7 @@ let randomName: number = 1
 const get: ApiConfig[] = mapGather({
     //服务首页
     "/": function (req: Request, res: Response) {
+
         return res.send('hello world')
     },
     //随机获取一张头像图片 从静态 pubilc/img/updateImg文件夹中随机获取一张图片

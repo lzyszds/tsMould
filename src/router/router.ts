@@ -4,11 +4,14 @@ const router = Router()
 import post from "./postApiList";
 import get from "./getApiList";
 import {ApiConfig} from "../../typings/ApiCongfigType";
+import fs from "fs";
+import path from "path";
 
 //共有接口默认路径 get请求
 const OvertDefaultPath: string = '/overtApis';
 //私有接口默认路径 post请求
 const PrivateDefaultPath: string = '/privateApis';
+
 
 //添加路由
 [get, post].forEach((method: ApiConfig[], index: number): void => {
