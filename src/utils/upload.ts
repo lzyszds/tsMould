@@ -1,7 +1,7 @@
 import multer, {Options} from "multer";
 import mime from "mime";
 import {Request, Response} from "express";
-import path from "path";
+import path from "node:path";
 import {ResponseData} from "../../typings/PostReturn";
 import {ErrorR} from "../../typings/PostReturn";
 

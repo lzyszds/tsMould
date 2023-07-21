@@ -17,8 +17,14 @@ interface ParamsMuster {
     search?: string
 }
 
+interface ProxyType {
+    get: ApiConfig[],
+    post: ApiConfig[]
+}
+
 export {
     ApiConfig,
     HttpResult,
-    ParamsMuster
+    ParamsMuster,
+    ProxyType
 }

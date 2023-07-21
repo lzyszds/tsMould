@@ -8,14 +8,26 @@ import sqlHandlesTodo from "../utils/mysql";
 import dayjs from "dayjs";
 import {ResponseData, ErrorR} from "../../typings/PostReturn";
 import User from "../../typings/User";
+import axios from "axios";
 import {ApiConfig} from "../../typings/ApiCongfigType";
-
+import {parps, headers} from "../utils/config_Github";
 const {success, successImg, error, notFound, badRequest, unauthorized} = errorHandle
 //路径默认配置值
 
 
 /* 配置所有路由接口 */
 const post: ApiConfig[] = mapGather({
+    //github api
+    "/proxy/github": async (req: Request, res: Response) => {
+        const url: string = "https://api.github.com/graphql"
+        try {
+            axios.post(url,parps ,{headers}).then(response => {
+                success(res, response.data.data)
+            });
+        }catch (e) {
+            error(res, e)
+        }
+    },
     //登录
     "/login": function (req: Request, res: Response) {
         const {username, password} = req.body;
@@ -140,7 +152,8 @@ const post: ApiConfig[] = mapGather({
                     success(res, '删除成功')
                 })
             }).catch(err => error(res, err))
-    }
+    },
+
 
 })
 

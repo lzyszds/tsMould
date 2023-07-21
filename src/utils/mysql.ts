@@ -1,8 +1,5 @@
 import mysql from "mysql";
-import {tokenClass} from "../utils/common";
-
-import User from "../../typings/User";
-import {ErrorR} from "../../typings/PostReturn";
+import {tokenClass} from "./common";
 
 const connection = mysql.createConnection({
     host: '127.0.0.1',
@@ -14,7 +11,7 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
     if (err) {
-        console.log('数据库连接失败')
+        console.log('数据库连接失败', err)
     } else {
         console.log('数据库连接成功')
     }

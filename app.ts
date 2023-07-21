@@ -8,8 +8,6 @@ const app: Application = express()
 
 app.use(json())
 
-
-
 app.all("*", (req: Request, res: Response, next) => {
   // 设置跨域
   res.header("Access-Control-Allow-Origin", "*")
@@ -46,5 +44,5 @@ app.use('/', router)
 app.use('/public', express.static('public'));//将文件设置成静态
 
 app.listen(8089, () => {
-  console.log("server is running at http://localhost:8089")
+  console.log("server is running at http://localhost:82089")
 })
