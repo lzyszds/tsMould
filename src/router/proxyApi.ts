@@ -2,12 +2,13 @@ import {mapGather, randomUnique} from "../utils/common";
 import {Request, Response} from "express";
 import {errorHandle} from "../utils/error";
 import axios from "axios";
-import {ApiConfig,ProxyType} from "../../typings/ApiCongfigType";
-import {headers, parps} from "../utils/config_Github";
+import {ProxyType} from "../../typings/ApiCongfigType";
+import path from "node:path";
+import fs from "node:fs";
 
 const {success, error} = errorHandle
 
-const proxy:ProxyType  = {
+const proxy: ProxyType = {
     "get": mapGather({
         //网易疫情数据api
         // "/proxy/WYwuhan": (req: Request, res: Response) => {
@@ -46,7 +47,7 @@ const proxy:ProxyType  = {
             });
         },
         //随机诗词
-        '/jinrishici/sentencei': async (req: Request, res: Response) => {
+        '/jinrishici/sentence': async (req: Request, res: Response) => {
             //查询语句
             const url: string = "https://v2.jinrishici.com/sentence"
             const headers: any = {
@@ -57,19 +58,21 @@ const proxy:ProxyType  = {
                 res.json(response.data);
             });
         },
-    }),
-    "post": mapGather({
         //github api
         "/github": async (req: Request, res: Response) => {
-            const url: string = "https://api.github.com/graphql"
             try {
-                axios.post(url,parps ,{headers}).then(response => {
-                    success(res, response.data.data)
-                });
-            }catch (e) {
+                console.log(process)
+                const filePath = path.resolve(__dirname, '../../public/json/getGithubInfo.json');
+                //打包想要路径
+                // const filePath = path.resolve(__dirname, './public/json/getGithubInfo.json');
+                // console.log(filePath)
+                const data = fs.readFileSync(filePath);
+                success(res, JSON.parse(data.toString()))
+            } catch (e) {
                 error(res, e)
             }
         },
-    })
+    }),
+    "post": mapGather({})
 }
 export default proxy
