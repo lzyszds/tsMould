@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "server": "ts-node-dev  ./app.ts",
+    "server": "ts-node-dev  ./app.ts --mode dev",
     "tsc": "tsc",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "rmjs": "ts-node-dev utilsPublic/rmjs.ts",
+    "perfectBuild": "tsc && webpack --mode production && ts-node-dev utilsPublic/rmjs.ts",
+    "fontUnicode": "ts-node-dev utilsPublic/unique.ts"
   },
   "author": "",
   "license": "ISC",
@@ -21,17 +24,21 @@
     "vite": "^4.3.9"
   },
   "dependencies": {
+    "@types/fontmin": "^0.9.0",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/mime": "^3.0.1",
     "@types/multer": "^1.4.7",
     "axios": "^1.4.0",
     "dayjs": "^1.11.7",
     "express": "^4.18.2",
+    "fontmin": "^0.9.9",
+    "http-proxy-middleware": "^2.0.6",
     "jquery": "^3.7.0",
     "mime": "^3.0.0",
     "multer": "1.4.5-lts.1",
     "mysql": "^2.18.1",
     "node-polyfill-webpack-plugin": "^2.0.1",
+    "node-schedule": "^2.1.1",
     "path": "^0.12.7",
     "path-browserify": "^1.0.1",
     "ts-loader": "^9.4.4",
