@@ -3,8 +3,11 @@ import fs from "fs";
 import path from "path";
 import {mapGather, TokenClass, sliceData, randomUnique, imgProxy} from "../utils/common";
 import {errorHandle} from "../utils/error";
-import sqlHandlesTodo from "../utils/mysql";
+import sqlHandlesTodo, {SqlTodo} from "../utils/mysql";
+import {ErrorResponse} from "../../typings/PostReturn";
+
 import {ApiConfig, ParamsMuster} from "../../typings/ApiCongfigType";
+import {Article, ParamsQuery, Comment, ArticleType} from "../../typings/GetApiTypes";
 
 
 const {success, successImg, error, notFound, badRequest, unauthorized} = errorHandle
@@ -34,174 +37,258 @@ const get: ApiConfig[] = mapGather({
     },
 
     //查询用户列表
-    "/getUserList": async function (req: Request, res: Response) {
-        const token = req.headers.authorization
-        //如果没有token 则返回未授权
-        if (token === undefined) return unauthorized(res, '未授权,请登录')
-        //限制每次返回多少条数据
-        let {pages, limit, search}: ParamsMuster = req.query
-        search = search ? search : ''
-        //查询总条数
-        const total = await sqlHandlesTodo({
-            type: 'select',
-            text: `select count(*) from userlist where uname like ?`,
-            values: [`%${search}%`],
-            token
-        })
-        //查询语句
-        const text: string = `select * from userlist where uname like ? order by uid limit ?,?`
-        const values: any[] = [`%${search}%`, (Number(pages) - 1) * Number(limit), Number(limit)]
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, values, token})
-            .then(item => success(res, item, '查询成功', total[0]['count(*)']))
-            .catch(err => error(res, err))
+    "/getUserList": async (req: Request, res: Response) => {
+        try {
+            const token = req.headers.authorization;
 
+            // 如果没有token 则返回未授权
+            if (!token) return unauthorized(res, '未授权,请登录');
+
+            // 获取页数、每页条数和搜索关键词
+            const {pages, limit, search}: ParamsMuster = req.query;
+            const searchTerm = search || '';
+
+            // 获取符合搜索条件的记录总数
+            const total = await sqlHandlesTodo({
+                type: 'select',
+                text: 'SELECT COUNT(*) as total FROM userlist WHERE uname LIKE ?',
+                values: [`%${searchTerm}%`],
+                token
+            } as SqlTodo);
+
+            // 获取分页的用户列表
+            const offset = (Number(pages) - 1) * Number(limit);
+            const userList = await sqlHandlesTodo({
+                type: 'select',
+                text: 'SELECT * FROM userlist WHERE uname LIKE ? ORDER BY uid LIMIT ?, ?',
+                values: [`%${searchTerm}%`, offset, Number(limit)],
+                token
+            } as SqlTodo);
+
+            // 成功响应，返回用户列表及总记录数
+            success(res, userList, '查询成功', total[0].total);
+        } catch (err) {
+            // 错误处理，返回错误响应
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     //获取用户详情
-    '/getUserInfo': (req: Request, res: Response) => {
-        //获取请求头中的token
-        const token = req.headers.authorization
-        //如果没有token 则返回未授权
-        if (token === undefined) return unauthorized(res, '未授权,请登录')
-        //解析token
-        const {username, uname} = TokenClass.decodeToken(token)
-        //查询语句
-        const text: string = `select uid,uname,username,power,createDate,lastLoginDate,perSign,headImg,isUse from
-                            USERLIST where username=? and uname=? `
-        const values: any[] = [username, uname]
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, values, token})
-            .then(item => success(res, item[0], '查询成功')
-            )
-            .catch(err => error(res, err))
+    '/getUserInfo': async (req: Request, res: Response) => {
+        try {
+            // 获取请求头中的token
+            const token = req.headers.authorization;
+
+            // 如果没有token 则返回未授权
+            if (!token) return unauthorized(res, '未授权,请登录');
+            // 解析token
+            const {username, uname} = TokenClass.decodeToken(token);
+
+            // 查询用户信息
+            const text: string = `
+              SELECT uid, uname, username, power, createDate, lastLoginDate, perSign, headImg, isUse
+              FROM userlist
+              WHERE username=? AND uname=?
+            `;
+            const values: any[] = [username, uname];
+
+            // 执行查询
+            const userInfo = await sqlHandlesTodo({type: 'select', text, values, token});
+
+            // 成功响应，返回用户信息
+            success(res, userInfo[0], '查询成功');
+        } catch (err) {
+            // 错误处理，返回错误响应
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     //查询文章列表
     '/articleList': async (req: Request, res: Response) => {
-        //获取页数和每页条数
-        const {pages, limit, search}: ParamsMuster = req.query
-        //查询语句 倒序查询
+        try {
+            // 从请求参数中解构出文章查询参数
+            const {pages, limit, search} = req.query as unknown as ParamsQuery;
+            // 获取搜索关键字，如果没有则为空字符串
+            const searchText: string = search ?? '';
+            // 查询文章总条数
+            const totalResult: any[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT COUNT(*) AS totalCount FROM articlelist WHERE title LIKE ?`,
+                values: [`%${searchText}%`],
+                hasVerify: true
+            });
+            // 总条数赋值，如果没有查询到结果，则默认为0
+            const totalCount: number = totalResult[0]?.totalCount ?? 0;
 
-        const text: string = `select * from articlelist where title like ? order by aid desc limit ?,?`
-        const values: any[] = [`%${search ?? ''}%`, (Number(pages) - 1) * Number(limit), Number(limit)]
-        //查询总条数
-        const total = await sqlHandlesTodo({
-            type: 'select',
-            text: `select count(*) from articlelist where title like ?`,
-            values: [`%${search ?? ''}%`],
-            hasVerify: true
-        })
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, values, hasVerify: true})
-            .then(item => success(res, item, '查询成功', total[0]['count(*)']))
-            .catch(err => error(res, err))
+            // 执行查询文章列表
+            const articleList: Article[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT * FROM articlelist WHERE title LIKE ? ORDER BY aid DESC LIMIT ?, ?`,
+                values: [`%${searchText}%`, (Number(pages) - 1) * Number(limit), Number(limit)],
+                hasVerify: true
+            });
 
+            success(res, articleList, '查询成功', totalCount);
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     //获取文章详情
-    '/articleInfo': (req: Request, res: Response) => {
-        //获取文章id
-        const {aid} = req.query
-        //查询语句
-        const text = `select * from articlelist where aid=?`
-        const values = [aid]
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, values, hasVerify: true})
-            .then(item => success(res, item[0], '查询成功'))
-            .catch(err => error(res, err))
+    '/articleInfo': async (req: Request, res: Response) => {
+        try {
+            // 从请求的查询参数中获取文章id
+            const {aid} = req.query as { aid: string };
+
+            // 查询语句
+            const text: string = `SELECT * FROM articlelist WHERE aid = ?`;
+            const values: any[] = [Number(aid)];
+
+            // 执行查询
+            const articleList: Article[] = await sqlHandlesTodo({type: 'select', text, values, hasVerify: true});
+
+            // 返回查询结果
+            if (articleList.length > 0) {
+                success(res, articleList[0], '查询成功');
+            } else {
+                error(res, {code: 404, msg: '文章不存在'});
+            }
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     //获取文章评论
-    '/articleComment': (req: Request, res: Response) => {
-        //获取文章id
-        const {aid} = req.query as { aid: string }
-        //查询语句
-        const text: string = `select * from wcomment where article_id=?`
-        const values: string[] = [aid]
+    '/articleComment': async (req: Request, res: Response) => {
+        try {
+            // 从请求的查询参数中获取文章id
+            const {aid} = req.query as { aid: string };
 
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, values, hasVerify: true})
-            .then(data => {
-                if (data.length === 0) return success(res, [], '查询成功')
-                //声明一个数组
-                let arr: any[] = []
-                //处理二级评论数据，将二级评论放到对应的一级评论的reply属性中
-                const levelOne = data.filter((item: any) => item.reply_id == 0)
-                const levelTow = data.filter((item: any) => item.reply_id != 0)
-                levelOne.forEach((element: any) => {
-                    arr.push(element)
-                })
-                levelTow.forEach((element: any) => {
-                    levelOne.forEach((item: any) => {
-                        data.forEach((res: any) => {
-                            if (res.comId === element.reply_id) {
-                                element.replyPeople = res.user_name
-                            }
-                        })
-                        //将二级评论放到对应的一级评论的reply属性中
-                        if (item.comId === element.ground_id) {
-                            if (!item.reply) item.reply = []
-                            item.reply.push(element)
-                        }
-                    })
-                })
-                success(res, arr, '查询成功')
-            })
-            .catch(err => error(res, err))
+            // 查询语句
+            const text: string = `SELECT * FROM wcomment WHERE article_id = ?`;
+            const values: string[] = [aid];
+
+            // 执行查询
+            const data: Comment[] = await sqlHandlesTodo({type: 'select', text, values, hasVerify: true});
+
+            // 处理二级评论数据，将二级评论放到对应的一级评论的reply属性中
+            const levelOne: Comment[] = data.filter((item) => item.reply_id === 0);
+            const levelTwo: Comment[] = data.filter((item) => item.reply_id !== 0);
+            levelOne.forEach((element) => {
+                const replyArray: Comment[] = levelTwo.filter((item) => item.ground_id === element.comId);
+                if (replyArray.length > 0) {
+                    element.reply = replyArray;
+                    element.replyPeople = replyArray[0].user_name;
+                }
+            });
+
+            success(res, levelOne, '查询成功');
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     //获取全部评论
-    '/getAllComment': (req: Request, res: Response) => {
-        //查询语句
-        const text = `select * from wcomment`
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, hasVerify: true})
-            .then(item => success(res, item, '查询成功'))
-            .catch(err => error(res, err))
+    '/getAllComment': async (req: Request, res: Response) => {
+        try {
+            const {pages, limit, search} = req.query as unknown as ParamsQuery;
+            const searchText: string = search ?? '';
+            // 查询评论总条数
+            const totalResult: any[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT COUNT(*) AS totalCount FROM wcomment WHERE content LIKE ?`,
+                values: [`%${searchText}%`],
+                hasVerify: true
+            });
+            // 总条数赋值，如果没有查询到结果，则默认为0
+            const totalCount: number = totalResult[0]?.totalCount ?? 0;
+            // 执行查询
+            const comments: Comment[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT * FROM wcomment WHERE content LIKE ? ORDER BY comId DESC LIMIT ?, ?`,
+                values: [`%${searchText}%`, (Number(pages) - 1) * Number(limit), Number(limit)],
+                hasVerify: true
+            });
+            success(res, comments, '查询成功', totalCount);
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
 
     //获取文章分类可选项
     '/articleType': async (req: Request, res: Response) => {
-        //查询语句
-        const text = `select * from articletype`
-        //执行查询
-        sqlHandlesTodo({type: 'select', text, hasVerify: true})
-            .then(item => success(res, item, '查询成功'))
-            .catch(err => error(res, err))
+        try {
+            // 执行查询
+            const articleTypes: ArticleType[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT * FROM articletype`,
+                hasVerify: true
+            });
+
+            success(res, articleTypes, '查询成功');
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     // 随机文章图库
-    '/getRandArticleImg': function (req: Request, res: Response) {
-        // 获取文件夹 pubilc/img/coverRomImg中的所有图片文件(名字)
-        let imgs = fs.readdirSync(path.join(__dirname, '../../public/img/coverRomImg'))
-        //随机数
-        let random = randomUnique(1, imgs.length - 1, 0)
-        //获取随机图片
-        const img = imgs[random]
-        //设置返回头为图片格式
-        res.writeHead(200, {'Content-Type': 'image/jpeg'})
-        //返回图片
-        fs.createReadStream(path.join(__dirname, '../../public/img/coverRomImg/' + img)).pipe(res)
+    '/getRandArticleImg': (req: Request, res: Response) => {
+        try {
+            // 获取文件夹 public/img/coverRomImg 中的所有图片文件(名字)
+            const imgDir = path.join(__dirname, '../../public/img/coverRomImg');
+            const imgs = fs.readdirSync(imgDir);
 
+            // 随机数
+            const random = randomUnique(0, imgs.length - 1, 0);
+            // 获取随机图片
+            const img = imgs[random];
+
+            // 设置返回头为图片格式
+            res.writeHead(200, {'Content-Type': 'image/jpeg'});
+
+            // 返回图片
+            const imgPath = path.join(imgDir, img);
+            fs.createReadStream(imgPath).pipe(res);
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     },
     //获取评论列表
     '/getComments': async (req: Request, res: Response) => {
-        const text: string = ` select * from wcomment `
-        sqlHandlesTodo({type: 'select', text, hasVerify: true}).then(item => {
-            success(res, item, '查询成功')
-        })
-        //     .then(item => success(res, item, '查询成功', total[0]['count(*)']))
-        //     .catch(err => error(res, err))
-        // //获取页数和每页条数
-        // const {pages, limit, search} = req.query
-        // //查询语句
-        // const sqlTxt = `select * from wcomment where content like '%${search??''}%'
-        // order by cid limit ${(Number(pages) - 1) * Number(limit)},${limit}`
-        // //查询总条数
-        // const total = await sqlHandlesTodo({
-        //     type: 'select',
-        //     text: `select count(*) from wcomment where content like '%${search??''}%'`,
-        //     hasVerify: true
-        // })
-        // //执行查询
-        // sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
-        //     .then(item => success(res, item, '查询成功', total[0]['count(*)']))
-        //     .catch(err => error(res, err))
+        try {
+            const {pages, limit, search} = req.query as unknown as ParamsQuery;
+            const searchText: string = search ?? '';
+
+            // 查询语句
+            const text: string = `SELECT * FROM wcomment WHERE content LIKE ? ORDER BY cid LIMIT ?, ?`;
+            const values: (string | number)[] = [`%${searchText}%`, (Number(pages) - 1) * Number(limit), Number(limit)];
+
+            // 查询评论总条数
+            const totalResult: any[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT COUNT(*) AS totalCount FROM wcomment WHERE content LIKE ?`,
+                values: [`%${searchText}%`],
+                hasVerify: true
+            });
+
+            // 总条数赋值，如果没有查询到结果，则默认为0
+            const totalCount: number = totalResult[0]?.totalCount ?? 0;
+
+            // 执行查询
+            const comments: Comment[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT * FROM wcomment WHERE content LIKE ? ORDER BY cid LIMIT ?, ?`,
+                values: [`%${searchText}%`, (Number(pages) - 1) * Number(limit), Number(limit)],
+                hasVerify: true
+            });
+
+            success(res, comments, '查询成功', totalCount);
+        } catch (err) {
+            const errorRes: ErrorResponse = {code: 500, msg: 'Internal Server Error'};
+            error(res, errorRes);
+        }
     }
 })
 
