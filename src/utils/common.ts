@@ -1,10 +1,10 @@
-import {Request, Response} from "express";
 import jwt from "jsonwebtoken"
 import sqlHandlesTodo from "./mysql";
 import {ErrorR, ResponseData} from "../../typings/PostReturn";
 import fs from "fs"
-import multer from "multer"
 import * as https from "https";
+import path from "node:path";
+import dayjs from "dayjs";
 
 
 interface MapObject {
@@ -22,41 +22,41 @@ const mapGather = (value: MapObject): MapObject[] => {
 
 //token密钥集合
 const secret = 'I_LOVE_JING|tpyeScript'
-const tokenClass = {
-    //生成token
-    token: (val: { username: string, uname: string }) => jwt.sign(val, secret),
-    //解析token
-    decodeToken: (token: string): any => {
-        if (token) return jwt.verify(token, secret)
-        return "token is null"
-    },
 
-    /*
-      当前代码的功能 是验证token是否有效
-      hasVerify:是否需要验证token
-      token:需要验证的token
-    */
-    verifyToken: (token: string, hasVerify?: boolean,): Promise<boolean | string> => {
-        return new Promise((resolve, reject) => {
-            if (hasVerify === true) resolve(true) //不需要验证token的接口
-            if (!token) reject(false) //没有token
-            token = token.replace('Bearer ', '') //截取token
-            //返回解析token的结果
-            const proxy: any = jwt.verify(token, secret) || {}
-            const text = `select uid from USERLIST where username='${proxy.username}' and uname='${proxy.uname}' `
-            sqlHandlesTodo({type: 'select', text, hasVerify: true})
-                .then((result: any) => {
-                    if (result.length > 0) {
-                        resolve(result[0])
-                    } else {
-                        reject({code: 400, msg: 'user not found'})
-                    }
-                })
-                .catch((err: ErrorR) => {
-                    reject(err)
-                })
-        })
-    }
+// 定义 Token 类
+class TokenClass {
+    // 生成 Token
+    static generateToken = (val: { username: string, uname: string }): string => jwt.sign(val, secret);
+
+    // 解析 Token
+    static decodeToken = (token: string): any => {
+        if (!token) return "token is null";
+        token = token.replace('Bearer ', '');
+        return jwt.verify(token, secret);
+    };
+
+    // 验证 Token 是否有效
+    static verifyToken = async (token: string, hasVerify?: boolean): Promise<boolean | any> => {
+        if (hasVerify === true) return true; // 不需要验证 token 的接口
+        if (!token) throw new Error('Token not provided'); // 没有提供 token
+
+        try {
+            token = token.replace('Bearer ', '');
+            const decodedToken: any = jwt.verify(token, secret);
+
+            const text: string = `SELECT uid FROM USERLIST WHERE username=? AND uname=?`;
+            const values: string[] = [decodedToken.username, decodedToken.uname];
+            const result = await sqlHandlesTodo({type: 'select', text, values, hasVerify: true});
+
+            if (result.length > 0) {
+                return result[0];
+            } else {
+                throw new Error('User not found');
+            }
+        } catch (err) {
+            throw new Error('Invalid token');
+        }
+    };
 }
 
 
@@ -110,11 +110,63 @@ const imgProxy = (url: string) => {
     })
 }
 
+/*
+* 代码是一个读取文件、去除重复字符后再写入文件的操作。
+* 它会读取指定文件的内容，将内容转换为数组，去除重复字符，
+* 然后再将去重后的内容写回到原文件中。
+* */
+const processFileContent = () => {
+    try {
+        const filePath = path.resolve(__dirname, '../../utilsPublic/font.txt');
+        //打包想要路径
+        // const filePath = path.resolve('./public/font/font.txt')
+        const text = fs.readFileSync(filePath, "utf-8");
+        //去重处理
+        const arr = text.split("");
+        const newArr = [...new Set(arr)];
+        const newStr = newArr.join("");
+        //将文件内容更新
+        fs.writeFileSync(filePath, newStr);
+
+        console.log("文件内容去重成功");
+        // 结束进程
+
+    } catch (error) {
+        console.error("文件内容去重失败:", error);
+    }
+    process.exit(0);
+};
+
+//将字符串中所有的单引号转成双引号
+const replaceSingleQuotes = (str: string | any[]) => {
+    if (typeof str === 'string') return str.replace(/'/g, '"')
+    return str.map((item: any) => {
+        return item.replace(/'/g, '"')
+    })
+}
+
+//判断传入的参数是否是英文和数字组成的字符串
+function toValidEnglishNumber(val: string | any[]): boolean {
+    const reg = /^[a-zA-Z0-9]{3,16}$/; // 匹配由英文字母和数字组成，且长度为3到16位的字符串
+    if (typeof val === 'string') return reg.test(val)
+    return val.every((item: string) => {
+        return reg.test(item)
+    })
+}
+
+//获取当前时间的时间戳
+const getCurrentUnixTime = () => {
+    return dayjs().unix();
+}
 
 export {
     mapGather,
-    tokenClass,
+    TokenClass,
     sliceData,
     randomUnique,
     imgProxy,
+    processFileContent,
+    replaceSingleQuotes,
+    toValidEnglishNumber,
+    getCurrentUnixTime
 }

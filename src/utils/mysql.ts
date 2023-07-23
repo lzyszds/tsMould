@@ -1,5 +1,5 @@
 import mysql from "mysql";
-import {tokenClass} from "./common";
+import {TokenClass} from "./common";
 
 const connection = mysql.createConnection({
     host: '127.0.0.1',
@@ -23,9 +23,10 @@ connection.connect((err) => {
     token：用户token 与hasVerify对立，两者必有一样存在，否则报错;
     errmsg: 数据为空时错误提示;
 */
-type SqlTodo = {
+export type SqlTodo = {
     type: SqlType,
     text: string,
+    values?: any[], //sql语句中的values值 占位符替换避免sql注入
     errmsg?: string,
     hasVerify?: boolean,
     token?: string
@@ -35,19 +36,20 @@ type SqlType = 'select' | 'insert' | 'update' | 'delete' | 'alter'
 
 //接收到前端发来的sql语句
 const sqlHandlesTodo = (options: SqlTodo): Promise<any> => {
-    const {type, text, hasVerify, token, errmsg} = options
+    const {type, text, values, hasVerify, token, errmsg} = options
     return new Promise((resolve, reject) => {
         //检测当前的text是否是查询语句
         const isCompliant: boolean = checkText(text, type)
         if (isCompliant) return reject(`当前${type}语句不合规范`)
         //验证token
-        tokenClass.verifyToken(token || '', hasVerify).then(res => {
+        TokenClass.verifyToken(token || '', hasVerify).then(res => {
             //连接数据库
-            connection.query(text, (err, result) => {
+            connection.query(text, values, (err, result) => {
                 if (err) {
                     console.log(`当前查询语句为：` + text);
                     reject(`${type}失败`)
                 }
+
                 if (result.length === 0) {
                     resolve(errmsg || [])
                 }
@@ -58,7 +60,7 @@ const sqlHandlesTodo = (options: SqlTodo): Promise<any> => {
                 1.没有传入token值给查询方法且没有跳过认证token,默认需要验证token,需要去配置hasVerify:true
                 2.要么就是token验证失败，账号不存在
             `
-            reject("token验证失败 提示：" + reason)
+            reject({msg: "token验证失败 提示：" + reason, err})
         })
     }).catch((err: Error) => console.log(err))
 }

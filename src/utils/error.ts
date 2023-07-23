@@ -1,8 +1,25 @@
 import {Response} from "express";
 import {ErrorR, ResponseData} from "../../typings/PostReturn";
 
+import fs from "node:fs";
+import path from "path";
+
+//将要传给前端的结果，先上传至字体收集器中，便于后台压缩字体
+const resultWriteFont = (text: string) => {
+    // 3. 将文件内容转换为数组
+    const arr = text.split("")
+    // 4. 去重
+    const newArr = [...new Set(arr)]
+    // 5. 将数组转换为字符串
+    const newStr = newArr.join("")
+    fs.appendFileSync(path.resolve('utilsPublic/font.txt'), newStr)
+    //打包想要路径
+    // fs.appendFileSync(path.resolve('./public/font/font.txt'), newStr)
+}
+
 const success = <T>(res: Response, data: T, msg?: string, total?: number) => {
     /* T:泛型 res:响应 data:响应数据 msg:响应信息 total:响应数据总条数 */
+    resultWriteFont(JSON.stringify(data))
     res.send({
         code: 200,
         data,
@@ -13,7 +30,7 @@ const success = <T>(res: Response, data: T, msg?: string, total?: number) => {
 //图片返回
 const successImg = (res: Response, data: Buffer) => {
     // 返回给前端
-    res.writeHead(200, { 'Content-Type': 'image/png' });
+    res.writeHead(200, {'Content-Type': 'image/png'});
     /* res:响应 data:响应数据 msg:响应信息 */
     res.end(data)
 }
@@ -53,6 +70,7 @@ const unauthorized = (res: Response, msg: string | unknown) => {
         msg: msg || 'unauthorized'
     } as ErrorR)
 }
+
 
 export const errorHandle = {
     success,

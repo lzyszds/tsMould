@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import fs from "fs";
 import path from "path";
-import {mapGather, tokenClass, sliceData, randomUnique, imgProxy} from "../utils/common";
+import {mapGather, TokenClass, sliceData, randomUnique, imgProxy} from "../utils/common";
 import {errorHandle} from "../utils/error";
 import sqlHandlesTodo from "../utils/mysql";
 import {ApiConfig, ParamsMuster} from "../../typings/ApiCongfigType";
@@ -41,18 +41,18 @@ const get: ApiConfig[] = mapGather({
         //限制每次返回多少条数据
         let {pages, limit, search}: ParamsMuster = req.query
         search = search ? search : ''
-        //查询语句
-        const sqlTxt = `select * from userlist where uname like '%${search}%'
-        order by uid limit ${(Number(pages) - 1) * Number(limit)},${limit}`
         //查询总条数
         const total = await sqlHandlesTodo({
             type: 'select',
-            text: `select count(*) from userlist where uname like '%${search}%'`,
+            text: `select count(*) from userlist where uname like ?`,
+            values: [`%${search}%`],
             token
         })
-        //asdf
+        //查询语句
+        const text: string = `select * from userlist where uname like ? order by uid limit ?,?`
+        const values: any[] = [`%${search}%`, (Number(pages) - 1) * Number(limit), Number(limit)]
         //执行查询
-        sqlHandlesTodo({type: 'select', text: sqlTxt, token})
+        sqlHandlesTodo({type: 'select', text, values, token})
             .then(item => success(res, item, '查询成功', total[0]['count(*)']))
             .catch(err => error(res, err))
 
@@ -64,12 +64,13 @@ const get: ApiConfig[] = mapGather({
         //如果没有token 则返回未授权
         if (token === undefined) return unauthorized(res, '未授权,请登录')
         //解析token
-        const {username, uname} = tokenClass.decodeToken(token)
+        const {username, uname} = TokenClass.decodeToken(token)
         //查询语句
         const text: string = `select uid,uname,username,power,createDate,lastLoginDate,perSign,headImg,isUse from
-                            USERLIST where username='${username}' and uname='${uname}' `
+                            USERLIST where username=? and uname=? `
+        const values: any[] = [username, uname]
         //执行查询
-        sqlHandlesTodo({type: 'select', text, token})
+        sqlHandlesTodo({type: 'select', text, values, token})
             .then(item => success(res, item[0], '查询成功')
             )
             .catch(err => error(res, err))
@@ -78,17 +79,19 @@ const get: ApiConfig[] = mapGather({
     '/articleList': async (req: Request, res: Response) => {
         //获取页数和每页条数
         const {pages, limit, search}: ParamsMuster = req.query
-        //查询语句
-        const sqlTxt = `select * from articlelist where title like '%${search??''}%' 
-        order by aid limit ${(Number(pages) - 1) * Number(limit)},${limit}`
+        //查询语句 倒序查询
+
+        const text: string = `select * from articlelist where title like ? order by aid desc limit ?,?`
+        const values: any[] = [`%${search ?? ''}%`, (Number(pages) - 1) * Number(limit), Number(limit)]
         //查询总条数
         const total = await sqlHandlesTodo({
             type: 'select',
-            text: `select count(*) from articlelist where title like '%${search??''}%'`,
+            text: `select count(*) from articlelist where title like ?`,
+            values: [`%${search ?? ''}%`],
             hasVerify: true
         })
         //执行查询
-        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+        sqlHandlesTodo({type: 'select', text, values, hasVerify: true})
             .then(item => success(res, item, '查询成功', total[0]['count(*)']))
             .catch(err => error(res, err))
 
@@ -98,20 +101,23 @@ const get: ApiConfig[] = mapGather({
         //获取文章id
         const {aid} = req.query
         //查询语句
-        const sqlTxt = `select * from articlelist where aid=${aid}`
+        const text = `select * from articlelist where aid=?`
+        const values = [aid]
         //执行查询
-        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+        sqlHandlesTodo({type: 'select', text, values, hasVerify: true})
             .then(item => success(res, item[0], '查询成功'))
             .catch(err => error(res, err))
     },
     //获取文章评论
     '/articleComment': (req: Request, res: Response) => {
         //获取文章id
-        const {aid} = req.query
+        const {aid} = req.query as { aid: string }
         //查询语句
-        const sqlTxt = `select * from wcomment where article_id=${aid}`
+        const text: string = `select * from wcomment where article_id=?`
+        const values: string[] = [aid]
+
         //执行查询
-        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+        sqlHandlesTodo({type: 'select', text, values, hasVerify: true})
             .then(data => {
                 if (data.length === 0) return success(res, [], '查询成功')
                 //声明一个数组
@@ -143,9 +149,9 @@ const get: ApiConfig[] = mapGather({
     //获取全部评论
     '/getAllComment': (req: Request, res: Response) => {
         //查询语句
-        const sqlTxt = `select * from wcomment`
+        const text = `select * from wcomment`
         //执行查询
-        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+        sqlHandlesTodo({type: 'select', text, hasVerify: true})
             .then(item => success(res, item, '查询成功'))
             .catch(err => error(res, err))
     },
@@ -153,9 +159,9 @@ const get: ApiConfig[] = mapGather({
     //获取文章分类可选项
     '/articleType': async (req: Request, res: Response) => {
         //查询语句
-        const sqlTxt = `select * from articletype`
+        const text = `select * from articletype`
         //执行查询
-        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true})
+        sqlHandlesTodo({type: 'select', text, hasVerify: true})
             .then(item => success(res, item, '查询成功'))
             .catch(err => error(res, err))
     },
@@ -175,8 +181,8 @@ const get: ApiConfig[] = mapGather({
     },
     //获取评论列表
     '/getComments': async (req: Request, res: Response) => {
-        const sqlTxt: string = ` select * from wcomment `
-        sqlHandlesTodo({type: 'select', text: sqlTxt, hasVerify: true}).then(item => {
+        const text: string = ` select * from wcomment `
+        sqlHandlesTodo({type: 'select', text, hasVerify: true}).then(item => {
             success(res, item, '查询成功')
         })
         //     .then(item => success(res, item, '查询成功', total[0]['count(*)']))
