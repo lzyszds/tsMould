@@ -6,7 +6,7 @@ import {errorHandle} from "../utils/error";
 import {upload, uploadArticleImg} from "../utils/upload";
 import sqlHandlesTodo, {SqlTodo} from "../utils/mysql";
 import dayjs from "dayjs";
-import {ResponseData, ErrorR} from "../../typings/PostReturn";
+import {ResponseData, ErrorR, ErrorResponse} from "../../typings/PostReturn";
 import User from "../../typings/User";
 import axios from "axios";
 import {ApiConfig} from "../../typings/ApiCongfigType";
@@ -130,13 +130,12 @@ const post: ApiConfig[] = mapGather({
             // 获取前端传入的参数
             const {authorization: token} = req.headers;
             const {main, content, title, coverContent, coverImg, modified, wtype, aid} = req.body;
-
             // 将参数中的 \\' 替换为单引号 '
             const sanitizedMain = main.replace(/\\'/g, "'");
             const sanitizedContent = content.replace(/\\'/g, "'");
 
             // 使用参数化查询，防止 SQL 注入
-            const sqlTxt = `UPDATE articlelist SET
+            const sqlTxt: string = `UPDATE articlelist SET
             title = ?,
             coverContent = ?,
             content = ?,
@@ -165,16 +164,18 @@ const post: ApiConfig[] = mapGather({
     '/addArticle': async (req: Request, res: Response) => {
         try {
             const token = req.headers.authorization;
-            const {author, title, content, main, coverImg, wtype} = req.body;
+            let {author, title, content, main, coverImg, wtype} = req.body;
+            wtype = JSON.stringify(wtype)
+            console.log(wtype)
             const nowDate: number = getCurrentUnixTime();
 
-            const sqlTxt = `
-            INSERT INTO articlelist (author, createTime, title, content, modified, main, coverImg, wtype)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-            const values = [author, nowDate, title, content, nowDate, main, coverImg, wtype];
-
-            await sqlHandlesTodo({type: 'insert', text: sqlTxt, values, token, errmsg: '发布失败'});
+            await sqlHandlesTodo({
+                type: 'insert',
+                text: `INSERT INTO articlelist (author, createTime, title, content, modified, main, coverImg, wtype) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                values: [author, nowDate, title, content, nowDate, main, coverImg, wtype],
+                token,
+                errmsg: '发布失败'
+            });
 
             success(res, null, '发布成功');
         } catch (err) {
@@ -226,6 +227,32 @@ const post: ApiConfig[] = mapGather({
             success(res, '删除成功');
         } catch (err) {
             error(res, err);
+        }
+    },
+    //添加文章分类
+    '/addArticleType': async (req: Request, res: Response) => {
+        try {
+            // 从请求体中获取文章分类名称
+            const {name} = req.body as { name: string };
+
+            // 执行查询
+            const response = await sqlHandlesTodo({
+                type: 'insert',
+                text: `INSERT INTO articletype (name) VALUES (?)`,
+                values: [name],
+                hasVerify: true
+            });
+
+            success(res, response, '添加成功');
+        } catch (err: any) {
+            // 判断是否是重复添加
+            if (err.code === 'ER_DUP_ENTRY') {
+                const errorRes: string = '该分类已存在'
+                error(res, errorRes);
+            } else {
+                const errorRes: string = 'Internal Server Error'
+                error(res, errorRes);
+            }
         }
     },
 })

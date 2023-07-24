@@ -5,7 +5,7 @@ interface ResponseData<T> {
 }
 
 interface ErrorResponse {
-    code: 200 | 204 | 400 | 401 | 403 | 404 | 500;
+    code: 200 | 204 | 400 | 401 | 403 | 404 | 500 | 'ER_DUP_ENTRY';
     msg: string;
 }
 

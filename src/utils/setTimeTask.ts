@@ -14,7 +14,7 @@ export default ()=>{
          0 9 * * *: 每天早上9点执行一次
          0 0 * * 1: 每周一的午夜执行一次
     */
-    schedule.scheduleJob('* * * * *', async function(){
+    schedule.scheduleJob('0 /2 * * *', async function(){
        try {
            // 创建目录
            const jsonDir = path.resolve(__dirname, '../../public/json');
