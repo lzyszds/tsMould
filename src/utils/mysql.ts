@@ -57,13 +57,8 @@ const sqlHandlesTodo = (options: SqlTodo): Promise<any> => {
             })
         }).catch(err => {
             const reason: string = `
-                    1.
-                    没有传入token值给查询方法且没有跳过认证token, 默认需要验证token, 需要去配置hasVerify
-                :
-                    true
-                    2.
-                    要么就是token验证失败，账号不存在
-                        `
+                    1.没有传入token值给查询方法且没有跳过认证token, 默认需要验证token, 需要去配置hasVerify:true
+                    2.要么就是token验证失败，账号不存在`
             reject({msg: "token验证失败 提示：" + reason, err})
         })
     }).catch((err: Error) => console.log(err))

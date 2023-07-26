@@ -86,22 +86,19 @@ const get: ApiConfig[] = mapGather({
             // 解析token
             const {username, uname} = TokenClass.decodeToken(token);
 
-            // 查询用户信息
-            const text: string = `
-              SELECT uid, uname, username, power, createDate, lastLoginDate, perSign, headImg, isUse
-              FROM userlist
-              WHERE username=? AND uname=?
-            `;
-            const values: any[] = [username, uname];
-
-            // 执行查询
-            const userInfo = await sqlHandlesTodo({type: 'select', text, values, token});
-
+            // 查询用户信息 返回用户信息
+            const userInfo: User[] = await sqlHandlesTodo({
+                type: 'select',
+                text: `SELECT uid, uname, username, power, createDate, lastLoginDate, perSign, headImg, isUse
+                      FROM userlist WHERE username=? AND uname=? LIMIT 1`,
+                values: [username, uname],
+                token
+            });
             // 成功响应，返回用户信息
             success(res, userInfo[0], '查询成功');
         } catch (err) {
             // 错误处理，返回错误响应
-            const msg: String = 'internal Server error';
+            const msg: string = 'internal Server error';
             error(res, msg);
         }
     },
@@ -199,14 +196,14 @@ const get: ApiConfig[] = mapGather({
             pages = pages ?? 1;
             limit = limit ?? 10;
             // 查询评论总条数
-            const totalResult: any[] = await sqlHandlesTodo({
+            const totalResult: { totalCount: number }[] = await sqlHandlesTodo({
                 type: 'select',
                 text: `SELECT COUNT(*) AS totalCount FROM wcomment WHERE content LIKE ?`,
                 values: [`%${search}%`],
                 hasVerify: true
             });
             // 总条数赋值，如果没有查询到结果，则默认为0
-            const totalCount: number = totalResult[0]?.totalCount ?? 0;
+            const totalCount: number = totalResult[0].totalCount ?? 0;
             // 执行查询
             const comments: Comment[] = await sqlHandlesTodo({
                 type: 'select',

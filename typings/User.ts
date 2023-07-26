@@ -11,6 +11,4 @@ interface User {
   perSign: string,
 }
 
-
-
 export default User 
