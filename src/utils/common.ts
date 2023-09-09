@@ -63,7 +63,7 @@ class TokenClass {
             token = token.replace('Bearer ', '');
             const decodedToken: any = jwt.verify(token, TokenClass.secret);
 
-            const text: string = `SELECT uid FROM USERLIST WHERE username=? AND uname=?`;
+            const text: string = `SELECT uid FROM userlist WHERE username=? AND uname=?`;
             const values: string[] = [decodedToken.username, decodedToken.uname];
             const result = await sqlHandlesTodo({ type: 'select', text, values, hasVerify: true });
 

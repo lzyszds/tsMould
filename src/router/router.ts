@@ -1,22 +1,22 @@
 import {Router} from "express";
-
-const router = Router()
 import post from "./postApiList";
 import get from "./getApiList";
 import proxy from "./proxyApi";
 
 import {ApiConfig} from "../../typings/ApiCongfigType";
 
+const router = Router()
+
 const DEFAULT_PATH: any = {
     get: '/overtApis',//共有接口默认路径 get请求
     post: '/privateApis',//私有接口默认路径 post请求
     proxyGet: '/proxyApis',//代理接口默认路径 get请求
-    proxyPost: '/proxyApis'//代理接口默认路径 post请求
+    proxyPost: '/proxyApis',//代理接口默认路径 post请求
 };
 
 //添加路由
-[get, post, proxy.get,proxy.post].forEach((method: ApiConfig[], index: number): void => {
-    let requestMethod: string = ['get', 'post', 'proxyGet',"proxyPost"][index]
+[get, post, proxy.get, proxy.post].forEach((method: ApiConfig[], index: number): void => {
+    let requestMethod: string = ['get', 'post', 'proxyGet', "proxyPost"][index]
     const isGet: boolean = requestMethod === 'get' || requestMethod === 'proxyGet'
     for (const item of method) {
         //获取对象的key

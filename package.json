@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "server": "ts-node-dev  ./app.ts --mode dev",
+    "server": "ts-node-dev ./app.ts --mode dev",
+    "start": "tsc && node ./app.js",
     "tsc": "tsc",
     "build": "webpack --mode production",
     "rmjs": "ts-node-dev utilsPublic/rmjs.ts",

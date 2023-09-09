@@ -2,8 +2,8 @@ import multer, {Options} from "multer";
 import mime from "mime";
 import {Request, Response} from "express";
 import path from "node:path";
-import {ResponseData, ErrorR} from "../../typings/PostReturn";
 import {errorHandle} from "./error";
+import crypto from "crypto";
 
 const {success, error} = errorHandle
 
@@ -30,8 +30,13 @@ const storage = multer.diskStorage({
     },
     filename: function (req: Request, file, cb) {
         if (allowImgType.includes(file.mimetype)) {
+            console.log(file.stream)
+            const nameMd5 = crypto.createHash('md5')
+            nameMd5.update(JSON.stringify(file.stream))
+            const dogerstName = nameMd5.digest('hex')
+            console.log(dogerstName)
             const imgtype = mime.getExtension(file.mimetype);
-            const suffix = Date.now() + '.' + imgtype;
+            const suffix = dogerstName + '.' + imgtype;
             cb(null, file.fieldname + suffix);
         } else {
             const err = new Error('当前文件暂不支持上传,暂时只支持jpg.jpeg,png,gif,bmp,webp,svg,icon等图片。');

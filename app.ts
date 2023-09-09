@@ -2,7 +2,6 @@ import express, {Application, json, Request, Response} from "express";
 import {ErrorR} from "./typings/PostReturn";
 import router from "./src/router/router";
 import __src_utils_setTimeTask from "./src/utils/setTimeTask";
-import {createProxyMiddleware} from 'http-proxy-middleware';
 
 
 const app: Application = express()
@@ -41,6 +40,9 @@ app.all("*", (req: Request, res: Response, next) => {
 
 //路由
 app.use('/', router)
+app.use('/api', router)
+
+app.use('/api/public', express.static('public'));//将文件设置成静态
 
 app.use('/public', express.static('public'));//将文件设置成静态
 

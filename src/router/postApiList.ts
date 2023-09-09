@@ -14,7 +14,6 @@ import {headers, parps} from "../utils/config_Github";
 const {success, successImg, error, notFound, badRequest, unauthorized} = errorHandle
 //路径默认配置值
 
-
 /* 配置所有路由接口 */
 const post: ApiConfig[] = mapGather({
     //github api
@@ -33,7 +32,7 @@ const post: ApiConfig[] = mapGather({
             const {username, password} = req.body;
             const result: User[] = await sqlHandlesTodo({
                 type: 'select',
-                text: `select * from USERLIST where username = ? and password = ?`,
+                text: `select * from userlist where username = ? and password = ?`,
                 values: [username, password],
                 hasVerify: true,
                 errmsg: '账号或者密码错误'
@@ -67,7 +66,7 @@ const post: ApiConfig[] = mapGather({
             // 设置属性
             await sqlHandlesTodo({
                 type: 'insert',
-                text: `insert into USERLIST(uname, username, password, power, createDate, 
+                text: `insert into userlist(uname, username, password, power, createDate, 
                        lastLoginDate, headImg, isUse, perSign) values(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 values: [name, username, password, power, date, date, headImg, true, perSign],
                 token
@@ -101,7 +100,7 @@ const post: ApiConfig[] = mapGather({
             // 调用修改方法
             await sqlHandlesTodo({
                 type: 'update',
-                text: `UPDATE USERLIST SET ? WHERE uid = ?`,
+                text: `UPDATE userlist SET ? WHERE uid = ?`,
                 values: [sqlres, uid],
                 token
             });
@@ -119,7 +118,7 @@ const post: ApiConfig[] = mapGather({
 
             await sqlHandlesTodo({
                 type: 'delete',
-                text: `DELETE FROM USERLIST WHERE uid = ?`,
+                text: `DELETE FROM userlist WHERE uid = ?`,
                 values: [id],
                 token
             });
