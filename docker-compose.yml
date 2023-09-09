@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    image: tsmould:v1.0.3  # 替换为你的 Web 容器镜像名称和版本
+    ports:
+      - "8089:8089"  # 将容器的 80 端口映射到主机的 80 端口（可以根据需要更改端口）
+    volumes:
+      - ./:/app  # 将主机当前目录下的 app 挂载到容器的 /app
+    depends_on:
+      - db  # 指定 web 服务依赖于 db 服务
+    environment:
+      MYSQL_HOST: db  # 设置数据库主机名为 db
+      MYSQL_PORT: 3306  # 设置数据库端口号为 3306
+      MYSQL_USER: root  # 设置数据库用户名
+      MYSQL_PASSWORD: 123456  # 设置数据库密码
+      MYSQL_DATABASE: lzy_admin  # 设置数据库名称
+
+  db:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456  # 设置 MySQL 根密码
+      MYSQL_DATABASE: lzy_admin  # 设置数据库名称
+      MYSQL_PASSWORD: 123456  # 设置数据库密码
+    volumes:
+      - db-data:/var/lib/mysql  # 持久化数据存储
+
+volumes:
+  db-data:  # 定义一个数据卷以持久化数据库数据
