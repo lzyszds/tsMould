@@ -61,8 +61,8 @@ const get: ApiConfig[] = mapGather({
             const offset = (Number(pages) - 1) * Number(limit);
             const userList: User = await sqlHandlesTodo({
                 type: 'select',
-                text: 'SELECT * FROM userlist WHERE uname LIKE ? ORDER BY uid LIMIT ?, ?',
-                values: [`%${search}%`, offset, Number(limit)],
+                text: 'SELECT * FROM userlist WHERE uname LIKE ? OR username LIKE ? OR admin LIKE ? OR perSign LiKE ? ORDER BY uid LIMIT ?, ?',
+                values: [`%${search}%`,`%${search}%`,`%${search}%`,`%${search}%`, offset, Number(limit)],
                 token
             } as SqlTodo);
 
