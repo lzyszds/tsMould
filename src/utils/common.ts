@@ -65,7 +65,7 @@ class TokenClass {
 
             const text: string = `SELECT uid FROM userlist WHERE username=? AND uname=?`;
             const values: string[] = [decodedToken.username, decodedToken.uname];
-            const result = await sqlHandlesTodo({ type: 'select', text, values, hasVerify: true });
+            const result = await sqlHandlesTodo({type: 'select', text, values, hasVerify: true});
 
             if (result.length > 0) {
                 return true;
@@ -76,6 +76,22 @@ class TokenClass {
             throw new Error('Invalid token');
         }
     };
+    static powerToken = async (token: string): Promise<boolean | any> => {
+        try {
+            token = token.replace('Bearer ', '');
+            const decodedToken: any = jwt.verify(token, TokenClass.secret);
+            const text: string = `SELECT power FROM userlist WHERE username=? AND uname=?`;
+            const values: string[] = [decodedToken.username, decodedToken.uname];
+            const result = await sqlHandlesTodo({type: 'select', text, values, hasVerify: true});
+            if (result.length > 0) {
+                return result;
+            } else {
+                return new Error('User not found');
+            }
+        } catch (e) {
+            console.log(e)
+        }
+    }
 }
 
 /**
@@ -97,7 +113,7 @@ const sliceData = <T>(data: T[], pages: number, limit: number): { data: T[], tot
     // 截取当前页数的数据
     data = data.slice(start, end);
 
-    return { data, total };
+    return {data, total};
 };
 
 /**

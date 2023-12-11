@@ -185,6 +185,30 @@ const post: ApiConfig[] = mapGather({
             error(res, err);
         }
     },
+    //删除文章
+    '/deleteArticle': async (req: Request, res: Response) => {
+        const token = req.headers.authorization;
+        const {id} = req.body;
+        try {
+            //检查当前用户是否有权限
+            const userPower = await TokenClass.powerToken(token);
+            const power = userPower[0].power;
+            if (power === 'admin') {
+                await sqlHandlesTodo({
+                    type: 'delete',
+                    text: `DELETE FROM articlelist WHERE aid = ?`,
+                    values: [id],
+                    token
+                });
+                success(res, '删除成功');
+            } else {
+                error(res, '您没有权限删除文章');
+            }
+        } catch (e) {
+            error(res, e);
+        }
+
+    },
     //上传文章封面或者内容图片
     '/uploadArticleImg': (req: Request, res: Response) => {
         uploadArticleImg(req, res)

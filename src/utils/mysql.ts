@@ -2,7 +2,7 @@ import mysql from "mysql";
 import {TokenClass} from "./common";
 
 const connection = mysql.createConnection({
-    host: "db"//'127.0.0.1'
+    host: '127.0.0.1' //"db"//'127.0.0.1'
     , port: 3306,
     user: 'root',
     password: '123456',

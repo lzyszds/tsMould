@@ -1,13 +1,12 @@
 import {Request, Response} from "express";
 import fs from "fs";
 import path from "path";
-import {mapGather, TokenClass, sliceData, randomUnique, imgProxy} from "../utils/common";
+import {mapGather, randomUnique, TokenClass} from "../utils/common";
 import {errorHandle} from "../utils/error";
 import sqlHandlesTodo, {SqlTodo} from "../utils/mysql";
-import {ErrorResponse} from "../../typings/PostReturn";
 
 import {ApiConfig, ParamsMuster} from "../../typings/ApiCongfigType";
-import {Article, ParamsQuery, Comment, ArticleType} from "../../typings/GetApiTypes";
+import {Article, ArticleType, Comment} from "../../typings/GetApiTypes";
 import User from "../../typings/User";
 
 
@@ -113,8 +112,8 @@ const get: ApiConfig[] = mapGather({
             // 查询文章总条数
             const totalResult: any[] = await sqlHandlesTodo({
                 type: 'select',
-                text: `SELECT COUNT(*) AS totalCount FROM articlelist WHERE title LIKE ?`,
-                values: [`%${search}%`],
+                text: `SELECT COUNT(*) AS totalCount FROM articlelist WHERE title LIKE ? OR content LIKE ? OR author LIKE ?`,
+                values: [`%${search}%`, `%${search}%`, `%${search}%`],
                 hasVerify: true
             });
             // 总条数赋值，如果没有查询到结果，则默认为0
