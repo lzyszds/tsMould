@@ -61,8 +61,8 @@ const get: ApiConfig[] = mapGather({
             const offset = (Number(pages) - 1) * Number(limit);
             const userList: User = await sqlHandlesTodo({
                 type: 'select',
-                text: 'SELECT * FROM userlist WHERE uname LIKE ? OR username LIKE ? OR admin LIKE ? OR perSign LiKE ? ORDER BY uid LIMIT ?, ?',
-                values: [`%${search}%`,`%${search}%`,`%${search}%`,`%${search}%`, offset, Number(limit)],
+                text: 'SELECT * FROM userlist WHERE uname LIKE ? OR username LIKE ? OR power LIKE ? OR perSign LiKE ? ORDER BY uid LIMIT ?, ?',
+                values: [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, offset, Number(limit)],
                 token
             } as SqlTodo);
 
@@ -71,7 +71,7 @@ const get: ApiConfig[] = mapGather({
         } catch (err) {
             // 错误处理，返回错误响应
             const msg: String = 'internal Server error';
-            error(res, msg);
+            error(res, err);
         }
     },
     //获取用户详情
@@ -148,6 +148,12 @@ const get: ApiConfig[] = mapGather({
 
             // 返回查询结果
             if (articleList.length > 0) {
+                await sqlHandlesTodo({
+                    type: "update",
+                    text: `UPDATE articlelist SET access_count  = access_count + 1 WHERE aid = ?`,
+                    values: [aid],
+                    hasVerify: true
+                })
                 success(res, articleList[0], '查询成功');
             } else {
                 error(res, {code: 404, msg: '文章不存在'});
@@ -256,6 +262,49 @@ const get: ApiConfig[] = mapGather({
             error(res, msg);
         }
     },
+    //后台首页数据
+    '/getAdminHomeData': async (req: Request, res: Response) => {
+        let token = req.headers.authorization
+        if (token) {
+            token = token.replace('Bearer ', '')
+        }
+
+        const articlet = await sqlHandlesTodo({
+            type: 'select',
+            text: `Select * FROM articlelist ORDER BY aid DESC`,
+            token
+        })
+        //在列表中 随机抽取6篇文章
+        const randoms: number[] = []
+        for (let i = 0; i < 6; i++) {
+            const random = Math.floor(Math.random() * articlet.length)
+            if (randoms.includes(random)) i--
+            else randoms.push(random)
+        }
+        const articleList = randoms.map((item) => {
+            return {
+                title: articlet[item].title,
+                aid: articlet[item].aid,
+                coverImg: articlet[item].coverImg,
+            }
+        })
+
+        //获取最新的6篇文章
+        const news = articlet.slice(articlet.length - 6, articlet.length)
+
+
+        //获取文章分类
+        const articleType = await sqlHandlesTodo({
+            type: 'select',
+            text: `SELECT * FROM articletype`,
+            token
+        })
+        res.send({
+            hotList: articleList,
+            news: news,
+            articleType: articleType
+        })
+    }
 
 })
 

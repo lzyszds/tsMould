@@ -223,7 +223,7 @@ const post: ApiConfig[] = mapGather({
             // 获取前端传入的参数
             const {content, aid, replyId, groundId, email, name, userIp, imgIndex} = req.body;
             //头像地址
-            const img: string = `http://${req.get("Host")}/public/img/comments/${imgs[imgIndex]}`;
+            const img: string = `/img/comments/${imgs[imgIndex]}`;
             const nowDate: number = getCurrentUnixTime();
             // 添加评论进数据库
             await sqlHandlesTodo({

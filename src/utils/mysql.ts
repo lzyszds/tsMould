@@ -20,7 +20,7 @@ connection.connect((err) => {
 /*
     type: 对sql操作的类型;
     text: sql语句;
-    hasVerify：是否不需要验证true为不需要.默认需要验证;
+    hasVerify：是否不需要验证 true为不需要.默认需要验证;
     token：用户token 与hasVerify对立，两者必有一样存在，否则报错;
     errmsg: 数据为空时错误提示;
 */
@@ -57,9 +57,8 @@ const sqlHandlesTodo = (options: SqlTodo): Promise<any> => {
                 resolve(result)
             })
         }).catch(err => {
-            const reason: string = `
-                    1.没有传入token值给查询方法且没有跳过认证token, 默认需要验证token, 需要去配置hasVerify:true
-                    2.要么就是token验证失败，账号不存在`
+            const reason: string = `1.没有传入token值给查询方法且没有跳过认证token, 默认需要验证token, 需要去配置hasVerify:true;
+            2.要么就是token验证失败，账号不存在`
             reject({msg: "token验证失败 提示：" + reason, err})
         })
     }).catch((err: Error) => console.log(err))
