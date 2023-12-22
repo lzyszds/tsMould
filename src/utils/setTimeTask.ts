@@ -5,16 +5,14 @@ import path from "node:path"
 export default ()=>{
     //node定时任务
     const schedule = require('node-schedule');
-    //每天凌晨1点执行
     /*
          * * * * *: 每分钟执行一次
          30 * * * *: 每小时的第30分钟执行一次
          0 /2 * * *: 每2小时执行一次
-         0 2 * * *: 每天的第2小时执行一次
          0 9 * * *: 每天早上9点执行一次
          0 0 * * 1: 每周一的午夜执行一次
     */
-    schedule.scheduleJob('0 /2 * * *', async function(){
+    schedule.scheduleJob('* * * * *', async function(){
        try {
            // 创建目录
            const jsonDir = path.resolve(__dirname, '../../public/json');

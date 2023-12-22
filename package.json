@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
-  "scripts": {
-    "server": "ts-node-dev ./app.ts --mode dev",
-    "start": "tsc && node ./app.js",
-    "tsc": "tsc",
-    "build": "webpack --mode production",
-    "rmjs": "ts-node-dev utilsPublic/rmjs.ts",
-    "perfectBuild": "tsc && webpack --mode production && ts-node-dev utilsPublic/rmjs.ts",
-    "fontUnicode": "ts-node-dev utilsPublic/unique.ts"
+    "scripts": {
+      "dev": "ts-node-dev ./app.ts --mode dev",
+      "start": "tsc && node ./app.js",
+      "tsc": "tsc",
+      "build": "webpack --mode production",
+      "rmjs": "ts-node-dev utilsPublic/rmjs.ts",
+      "perfectBuild": "tsc && webpack --mode production && ts-node-dev utilsPublic/rmjs.ts",
+      "fontUnicode": "ts-node-dev utilsPublic/unique.ts"
   },
   "author": "",
   "license": "ISC",

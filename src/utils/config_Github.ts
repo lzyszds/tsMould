@@ -1,7 +1,8 @@
 const user = {
-  token: 'ghp_TVZKa1Rbzrw(lzymima)QgjrpjIOioX94UqAhMO37nXCY',
+  token: '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',
   name: 'lzyszds',
 }
+
 export const headers = {
   'Authorization': `bearer ${user.token.replace('(lzymima)', '')}`,
 }

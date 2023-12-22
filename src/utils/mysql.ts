@@ -7,7 +7,7 @@ const connection = mysql.createConnection({
     user: 'root',
     password: '123456',
     database: 'lzy_admin',
-    timeout: 60000
+    timeout: 0,
 })
 
 connection.connect((err) => {
@@ -17,6 +17,20 @@ connection.connect((err) => {
         console.log('数据库连接成功')
     }
 })
+
+process.on('uncaughtException', function (err: any) {
+    console.log(err)
+    if (err.code == "PROTOCOL_CONNECTION_LOST") {
+        connection.connect();
+    }
+});
+
+// 监听连接断开事件 就重新连接
+connection.on('error', (err) => {
+    console.error('Database connection was closed. Reconnecting...');
+    // 重新连接
+    connection.connect();
+});
 /*
     type: 对sql操作的类型;
     text: sql语句;
