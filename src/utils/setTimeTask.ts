@@ -30,7 +30,7 @@ export default ()=>{
 
            // 获取当前时间
            const date = new Date();
-           console.log("github数据获取成功", date);
+           // console.log("github数据获取成功", date);
        } catch (e) {
            console.error("github数据获取失败", e);
        }

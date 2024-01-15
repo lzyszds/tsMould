@@ -172,8 +172,8 @@ const processFileContent = (): void => {
         fs.writeFileSync(filePath, newStr);
 
         console.log("文件内容去重成功");
-        // 结束进程
-        process.exit(0);
+        // // 结束进程
+        // process.exit(0);
     } catch (error) {
         console.error("文件内容去重失败:", error);
     }

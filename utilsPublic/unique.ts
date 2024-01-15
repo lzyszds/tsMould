@@ -17,6 +17,7 @@ processFileContent()
 const filePath = path.join(__dirname, "./font.txt")
 
 const fontfiles = fs.readdirSync(path.resolve(__dirname, '../public/font/fonts'))
+console.log(fontfiles)
 let fontmin;
 fontfiles.forEach(res => {
     const srcPath: string = 'public/font/fonts/' + res; // 字体源文件
@@ -40,6 +41,7 @@ fontfiles.forEach(res => {
             console.error(err);
         }
         console.log('成功', res);        // 成功
+        process.exit(0);
     });
 })
 

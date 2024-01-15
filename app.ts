@@ -1,6 +1,7 @@
 import express, {Application, json, Request, Response} from "express";
 import {ErrorR} from "./typings/PostReturn";
 import router from "./src/router/router";
+
 import __src_utils_setTimeTask from "./src/utils/setTimeTask";
 
 
@@ -37,6 +38,7 @@ app.all("*", (req: Request, res: Response, next) => {
     // return res.send(<ErrorR>{ code: 401, msg: '请先登录' })
     next()
 })
+
 
 //路由
 app.use('/', router)
